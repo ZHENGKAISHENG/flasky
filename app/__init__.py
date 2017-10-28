@@ -7,6 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from config import config
 # 初始化Flask-Login
 from flask_login import LoginManager
+# 初始化Flask-PageDown
+from flask_pagedown import PageDown
 
 bootstrap = Bootstrap()
 mail = Mail()
@@ -16,6 +18,7 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'auth.login'
+pagedown = PageDown()
 
 # 工厂函数
 def create_app(config_name):
@@ -28,6 +31,7 @@ def create_app(config_name):
     moment.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
+    pagedown.init_app(app)
 
     # 附加路由和自定义的错误页面
     # 注册蓝本

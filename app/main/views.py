@@ -1,12 +1,12 @@
 """蓝本中定义的程序路由"""
 # 这里导入函数
-from flask import render_template, session, redirect, url_for, current_app, flash
+from flask import render_template, session, redirect, url_for, current_app, flash, request
 from flask_login import login_required
-from .forms import EditProfileForm, EditProfileAdminForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from flask_login import current_user
 from .. import db
 from ..decorators import admin_required
-from ..models import Role
+from ..models import Role, Post, Permission, User
 
 # 这里导入扩展实例  这里注意
 from . import main      # 导入蓝本main
@@ -15,15 +15,30 @@ from flask import abort
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    # 处理博客文章的首页路由
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+        form.validate_on_submit():
+        post = Post(body=form.body.data, author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    # 分页显示博客文章列表
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=10, error_out=False)
+    #posts = Post.query.order_by(Post.timestamp.desc()).all()
+    # 首页不显示全部
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, pagination=pagination)
 
-# 用户资料页面的路由
+# 用户资料页面的路由, 在资料页中显示博客文章
 @main.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
-    return render_template('user.html', user=user)
+    posts = user.posts.order_by(Post.timestamp.desc()).all()
+    return render_template('user.html', user=user, posts=posts)
 
 # 用户资料编辑路由
 @main.route('/edit-profile', methods=['GET', 'POST'])

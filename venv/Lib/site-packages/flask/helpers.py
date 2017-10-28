@@ -619,24 +619,18 @@ def safe_join(directory, *pathnames):
     :raises: :class:`~werkzeug.exceptions.NotFound` if one or more passed
             paths fall out of its boundaries.
     """
-
-    parts = [directory]
-
     for filename in pathnames:
         if filename != '':
             filename = posixpath.normpath(filename)
-
-        if (
-            any(sep in filename for sep in _os_alt_seps)
-            or os.path.isabs(filename)
-            or filename == '..'
-            or filename.startswith('../')
-        ):
+        for sep in _os_alt_seps:
+            if sep in filename:
+                raise NotFound()
+        if os.path.isabs(filename) or \
+           filename == '..' or \
+           filename.startswith('../'):
             raise NotFound()
-
-        parts.append(filename)
-
-    return posixpath.join(*parts)
+        directory = os.path.join(directory, filename)
+    return directory
 
 
 def send_from_directory(directory, filename, **options):
