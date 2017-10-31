@@ -1,3 +1,4 @@
+<!--分页导航（以jinja2模板宏方式实现）-->
 {% macro pagination_widget(pagination, endpoint) %}
 <ul class="pagination">
     <li{% if not pagination.has_prev %} class="disabled"{% endif %}>
